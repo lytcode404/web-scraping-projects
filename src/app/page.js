@@ -1,23 +1,27 @@
 'use client'
 import React, { useState } from 'react';
+
 import { load as loadModel, decodeImage } from '@tensorflow-models/mobilenet';
 import { browser } from '@tensorflow/tfjs';
 
 const ImageClassifier = () => {
   const [imageUrl, setImageUrl] = useState('');
   const [predictions, setPredictions] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     const reader = new FileReader();
 
     reader.onload = async (e) => {
+      setLoading(true);
       const image = await loadImage(e.target.result);
       const model = await loadModel();
       const predictions = await model.classify(image);
 
       setPredictions(predictions);
       setImageUrl(URL.createObjectURL(file));
+      setLoading(false);
     };
 
     reader.readAsDataURL(file);
@@ -33,16 +37,37 @@ const ImageClassifier = () => {
   };
 
   return (
-    <div>
-      <input type="file" accept="image/*" onChange={handleImageUpload} />
-      {imageUrl && <img src={imageUrl} alt="Uploaded" style={{ width: '300px', height: 'auto' }} />}
-      <h3>Predictions:</h3>
+    <div className="max-w-md mx-auto  p-6 shadow-lg rounded-lg">
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+        className="mb-4 py-2 px-4 border border-gray-300 rounded-md w-full"
+      />
+      {imageUrl && (
+        <img
+          src={imageUrl}
+          alt="Uploaded"
+          className="my-4 mx-auto w-64 h-auto rounded"
+        />
+      )}
+      <h3 className="text-xl font-bold mb-2">Predictions:</h3>
       <ul>
-        {predictions.map((prediction, index) => (
-          <li key={index}>{`${prediction.className}: ${Math.round(prediction.probability * 100)}%`}</li>
-        ))}
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <ul>
+          {predictions.map((prediction, index) => (
+            <li key={index} className="mb-2">
+              {`${prediction.className}: ${Math.round(prediction.probability * 100)}%`}
+            </li>
+          ))}
+        </ul>
+      )}
       </ul>
     </div>
+
+
   );
 };
 
